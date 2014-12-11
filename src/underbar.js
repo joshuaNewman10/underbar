@@ -99,7 +99,8 @@
   };
 
   // Produce a duplicate-free version of the array.
-  _.uniq = function(array) {
+  _.uniq = function(array,isSorted,iterator) {
+      if(array===null) return [];
       var seen = [];
       return _.filter(array,function(elem){
         if(seen.indexOf(elem)===-1) {
@@ -107,6 +108,8 @@
           return true;
         }
         return false;
+      }).sort(function(a,b){
+        return a-b;
       });
   };
 
@@ -198,12 +201,24 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    if(iterator===undefined) iterator = _.identity;
+
+    return _.reduce(collection,function(a,b){
+      return iterator(b) ? a : false;
+    },true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    if(iterator===undefined) iterator = _.identity;
+    var res = false;
+    _.every(collection,function(elem){
+      if(iterator(elem)) res = true;
+    });
+    return res;
+
   };
 
 
@@ -226,11 +241,27 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    var attribs = Array.prototype.slice.call(arguments,1);
+    _.each(attribs,function(o){
+      var keys = Object.keys(o);
+      _.each(keys,function(key){
+        obj[key] = o[key];
+      });
+    });
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    var attribs = Array.prototype.slice.call(arguments,1);
+      _.each(attribs,function(o){
+        var keys = Object.keys(o);
+        _.each(keys,function(key){
+          if(!(key in obj)) obj[key] = o[key];
+        });
+      });
+    return obj;
   };
 
 
@@ -273,7 +304,22 @@
   // _.memoize should return a function that, when called, will check if it has
   // already computed the result for the given argument and return that value
   // instead if possible.
-  _.memoize = function(func) {
+  _.memoize = function(func) { //Memoize for one arg, wants multiple though
+    var result;
+    var prevArgs = [];
+    var results = [];
+    return function() {
+      var arg = arguments[0];
+      var index = prevArgs.indexOf(arg);
+      if(index===-1) {
+        prevArgs.push(arg);
+        result = func.call(this,arg);
+        results.push(result);
+        return result;
+      } else {
+        return results[index];
+      }
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -283,6 +329,11 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments,2);
+    
+    return setTimeout(function(){
+      return func.apply(this,args);
+    },wait);
   };
 
 
@@ -296,8 +347,38 @@
   // TIP: This function's test suite will ask that you not modify the original
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
-  _.shuffle = function(array) {
-  };
+  _.shuffle = function(array) { //Naieve shuffle
+    var copy = array.slice();
+    var index;
+    var temp;
+    for(var i=0, l = array.length; i<l; i++) {
+      index = Math.floor(Math.random()*l);
+      temp = copy[index];
+      copy[index] = copy[i];
+      copy[i] = temp;
+    }
+    return copy;
+};
+
+  //http://spin.atomicobject.com/2014/08/11/fisher-yates-shuffle-randomization-algorithm/
+  _.FisherYatesShuffle = function(array) { /*Thank you Andrew Zey for teaching me this!!*/
+    var m = array.length, t, i;
+
+    // While there remain elements to shuffle…
+    while (m) {
+
+      // Pick a remaining element…
+      i = Math.floor(Math.random() * m--);
+
+      // And swap it with the current element.
+      t = array[m];
+      array[m] = array[i];
+      array[i] = t;
+    }
+
+    return array;
+}
+
 
 
   /**
@@ -326,6 +407,15 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var arrs = Array.prototype.slice.call(arguments);
+    arrs = arrs.sort(function(a,b){
+      return b.length - a.length;
+    });
+    return map(arrs[0],function(_,i){
+      return map(arrs,function(arr){
+        return arr[i];
+      });
+    });
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
