@@ -103,7 +103,7 @@
       if(array===null) return [];
       var seen = [];
       return _.filter(array,function(elem){
-        if(seen.indexOf(elem)===-1) {
+        if(_.indexOf(seen,elem)===-1) {
           seen.push(elem);
           return true;
         }
@@ -310,10 +310,11 @@
     var results = [];
     return function() {
       var arg = arguments[0];
-      var index = prevArgs.indexOf(arg);
+      var index = _.indexOf(prevArgs,arg);
+      console.log(index);
       if(index===-1) {
         prevArgs.push(arg);
-        result = func.call(this,arg);
+        result = func.apply(this,arguments);
         results.push(result);
         return result;
       } else {
@@ -399,6 +400,9 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    return collection.sort(function(a,b){
+      return iterator(a) > iterator(b) ? a : b;
+    });
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -411,8 +415,8 @@
     arrs = arrs.sort(function(a,b){
       return b.length - a.length;
     });
-    return map(arrs[0],function(_,i){
-      return map(arrs,function(arr){
+    return _.map(arrs[0],function(a,i){
+      return _.map(arrs,function(arr){
         return arr[i];
       });
     });
@@ -445,11 +449,23 @@
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    var arrs = Array.prototype.slice.call(arguments,0);
+    return _.filter(arrs[0],function(elem){
+      return _.every(arrs,function(arr){
+        return _.indexOf(arr,elem) > -1;
+      });
+    });
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var arrs = Array.prototype.slice.call(arguments,1);
+    return _.filter(array,function(elem){
+      return _.every(arrs,function(arr){
+        return _.indexOf(arr,elem) === -1;
+      });
+    });
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
