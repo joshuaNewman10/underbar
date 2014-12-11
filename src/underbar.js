@@ -418,12 +418,29 @@
     });
   };
 
+
+  _.OneDimensionalFlatten = function(arrs) {
+      return Array.prototype.concat.apply([],arrs);
+  }
+
   // Takes a multidimensional array and converts it to a one-dimensional array.
   // The new array should contain all elements of the multidimensional array.
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
-  };
+    var result = [];
+    recurvFlat(nestedArray);
+    function recurvFlat(n) {
+      for(var i=0; i<n.length; i++) {
+        if(Array.isArray(n[i])){
+          recurvFlat(n[i]);
+        } else {
+         result.push(n[i]);
+        }
+      }
+    }
+    return result;
+  }
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
