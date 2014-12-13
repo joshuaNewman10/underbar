@@ -8,7 +8,7 @@
   // iterator when the user does not pass one in, this will be handy.
   _.identity = function(val) {
     return val;
-  };
+  };  
 
   /**
    * COLLECTIONS
@@ -311,7 +311,6 @@
     return function() {
       var arg = arguments[0];
       var index = _.indexOf(prevArgs,arg);
-      console.log(index);
       if(index===-1) {
         prevArgs.push(arg);
         result = func.apply(this,arguments);
