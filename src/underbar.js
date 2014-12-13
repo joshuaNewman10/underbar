@@ -347,7 +347,7 @@
   // TIP: This function's test suite will ask that you not modify the original
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
-  _.shuffle = function(array) { //Naieve shuffle
+  _.naiveShuffle = function(array) { //Naieve shuffle
     var copy = array.slice();
     var index;
     var temp;
@@ -361,7 +361,9 @@
 };
 
   //http://spin.atomicobject.com/2014/08/11/fisher-yates-shuffle-randomization-algorithm/
-  _.FisherYatesShuffle = function(array) { /*Thank you Andrew Zey for teaching me this!!*/
+  _.shuffle = function(orig) { /*Thank you Andrew Zey for teaching me this!!*/
+    var array = orig.slice();
+
     var m = array.length, t, i;
 
     // While there remain elements to shuffle…
@@ -391,8 +393,12 @@
 
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
-  _.invoke = function(collection, functionOrKey, args) {
-  };
+  _.invoke = function(collection, functionOrKey) {
+    var args = Array.prototype.slice.call(arguments,2);
+    return _.map(collection,function(elem,i,collect){
+      return  (typeof functionOrKey==='function') ? functionOrKey.apply(elem,args): elem[functionOrKey].apply(elem,args); 
+    });
+ };
 
   // Sort the object's values by a criterion produced by an iterator.
   // If iterator is a string, sort objects by that property with the name
@@ -400,9 +406,20 @@
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
     return collection.sort(function(a,b){
-      return iterator(a) > iterator(b) ? a : b;
+      /*Really Ugly hack */
+      var resultA = (iterator==='length') ? a.length : iterator(a);
+      var resultB = (iterator==='length') ? b.length : iterator(b);
+
+      if(resultA < resultB ||resultB === void 0) {
+        return -1;
+      } else if(resultA > resultB || resultA ===void 0) {
+        return 1;
+      } else {
+        return 0;
+      }
     });
   };
+
 
   // Zip together two or more arrays with elements of the same index
   // going together.
@@ -430,7 +447,7 @@
   // The new array should contain all elements of the multidimensional array.
   //
   // Hint: Use Array.isArray to check if something is an array
-  _.flatten = function(nestedArray, result) {
+  _.flatten = function(nestedArray) {
     var result = [];
     recurvFlat(nestedArray);
     function recurvFlat(n) {
@@ -473,5 +490,33 @@
   //
   // Note: This is difficult! It may take a while to implement.
   _.throttle = function(func, wait) {
+  var args = Array.prototype.slice.call(arguments,2);
+    var start = 0;
+    var waiting = false;
+    var stackedWaitTime = 0;
+  
+    return function() {
+      var end = +new Date();
+      if(!waiting && end-start>=wait) {
+        start = end;
+        return func.apply(this,args);
+      }
+      else {
+          waiting = true;
+          if(stackedWaitTime<0)prevWait = 0;
+          stackedWaitTime+=wait
+          
+          return setTimeout(function(){
+              start = +new Date();
+              waiting = false;
+              stackedWaitTime -=100;
+              return func.apply(this,args);
+          },wait-(end-start)+stackedWaitTime);
+      }
+    }
   };
 }());
+
+
+
+
